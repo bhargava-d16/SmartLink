@@ -1,21 +1,43 @@
-import create from 'zustand'
+import {create} from 'zustand'
 import { axiosInstance } from '../libs/axios'
+import toast from 'react-hot-toast';
 
-export const useLinkStore = create((set) => ({
+const useLinkStore = create((set) => ({
   links: [],
   linkInput: '',
   setLinkInput: (input) => set({  linkInput: input }),
+  shortUrl:'',
+  setshortUrl:(input)=>set({shortUrl:input}),
 
-  url:async(data)=>{
+
+  shortenUrl:async(url)=>{
      try{
-      const res=axiosInstance.post("/create",data);
-      console.log(res.data);
+      const res=await axiosInstance.post("/create",url);
+      set({shortUrl:res.data.shortUrl})
+      return res.data
      }
      catch(error){
        console.log(error);
+       toast.error(error.message)
+          return { success: false, message: error.response?.data?.message };
      }
-  }
+  },
+
+  getUrl:async(id)=>{
+     try{
+        const res = await axiosInstance.get(`/get/${id}`);
+        console.log(res.data.fullUrl);
+        window.open(res.data.fullUrl, "_blank");
+     }
+     catch(error){
+       console.log(error);
+       toast.error(error.message)
+          return { success: false, message: error.response?.data?.message };
+     }
+  },
   
   
   
 }))
+
+export default useLinkStore

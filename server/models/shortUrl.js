@@ -1,5 +1,4 @@
 import mongoose, { Mongoose } from "mongoose";
-import UserModel from "./users.js";
 
 const URLSchema=new mongoose.Schema({
        
@@ -21,6 +20,10 @@ const URLSchema=new mongoose.Schema({
           type:Number,
           required:true,
           default:0,
+       },
+       createdAt: {
+          type: Date,
+          default: Date.now,
        },
        user:{
           type:mongoose.Schema.Types.ObjectId,

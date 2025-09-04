@@ -22,8 +22,8 @@ app.use(cookieParser());
 
 app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 
-app.use("/api", router);
-app.use("/api", Urlrouter);
+app.use("/", router);
+app.use("/", Urlrouter);
 
 
 const startServer = async () => {
