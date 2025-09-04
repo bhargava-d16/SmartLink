@@ -20,27 +20,34 @@ const InputPage = () => {
   const [showResult, setShowResult] = useState(false);
   const [id, setId] = useState("");
 
-  const handleAddLink = async (e) => {
-    e.preventDefault();
-    if (!linkInput.trim()) return;
+  
 
-    setLinks((prev) => [...prev, { id: Date.now(), url: linkInput.trim() }]);
+const handleAddLink = (e) => {
+  e.preventDefault();
+  if (!linkInput.trim()) return;
 
-    try {
-      const res = await shortenUrl({ url: linkInput });
-      if (res?.shortUrl) {
-        const shortenedId = res.shortUrl.split("/").pop();
-        setId(shortenedId);
-        console.log("Extracted ID:", shortenedId);
-        setShowResult(true);
-      }
-    } catch (err) {
-      console.error(err.message);
-      toast.error("Failed to shorten URL");
+  setLinks((prev) => [...prev, { id: Date.now(), url: linkInput.trim() }]);
+  setLinkInput("");
+};
+
+
+const handleSubmitLinks = async () => {
+  try {
+    const urls = links.map((link) => link.url); 
+    const res = await shortenUrl({ urls });     
+
+    if (res?.shortUrl) {
+      const shortenedId = res.shortUrl.split("/").pop();
+      setId(shortenedId);
+      console.log("Extracted ID:", shortenedId);
+      setShowResult(true);
     }
+  } catch (err) {
+    console.error(err.message);
+    toast.error("Failed to shorten URLs");
+  }
+};
 
-    setLinkInput("");
-  };
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(shortUrl);
@@ -49,13 +56,11 @@ const InputPage = () => {
 
   const visitUrl = async () => {
     try {
-      // Your getUrl function already handles the redirection
       await getUrl(id);
       toast.success("Redirecting to original URL...");
     } catch (error) {
       console.error("Error visiting URL:", error);
-      // Fallback: open the short URL directly
-      window.open(shortUrl, '_blank');
+      window.open(shortUrl, "_blank");
     }
   };
 
@@ -187,11 +192,18 @@ const InputPage = () => {
               type="submit"
               className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-r-md transition"
             >
-              →
+              +
             </button>
           </form>
+          {links.length > 0 && !showResult && (
+            <button
+              onClick={handleSubmitLinks}
+              className="mt-4 bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-md transition"
+            >
+              Submit Links
+            </button>
+          )}
 
-          {/* Shortened URL Result Display */}
           {showResult && shortUrl && (
             <div className="mt-6 max-w-2xl mx-auto">
               <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
