@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import logo from "../assets/link.png";
 import useLinkStore from "../store/LinkStore";
-
+import {useAuth} from "../store/authStore";
 const navigation = [
   { name: "Contact Us", path: "#" },
   { name: "Learn How it Works", path: "#" },
@@ -13,6 +13,7 @@ const navigation = [
 
 const InputPage = () => {
   const { shortenUrl, shortUrl, getUrl } = useLinkStore();
+  const { authUser } = useAuth();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [linkInput, setLinkInput] = useState("");
@@ -20,34 +21,30 @@ const InputPage = () => {
   const [showResult, setShowResult] = useState(false);
   const [id, setId] = useState("");
 
-  
+  const handleAddLink = (e) => {
+    e.preventDefault();
+    if (!linkInput.trim()) return;
 
-const handleAddLink = (e) => {
-  e.preventDefault();
-  if (!linkInput.trim()) return;
+    setLinks((prev) => [...prev, { id: Date.now(), url: linkInput.trim() }]);
+    setLinkInput("");
+  };
 
-  setLinks((prev) => [...prev, { id: Date.now(), url: linkInput.trim() }]);
-  setLinkInput("");
-};
+  const handleSubmitLinks = async () => {
+    try {
+      const urls = links.map((link) => link.url);
+      const res = await shortenUrl({ urls });
 
-
-const handleSubmitLinks = async () => {
-  try {
-    const urls = links.map((link) => link.url); 
-    const res = await shortenUrl({ urls });     
-
-    if (res?.shortUrl) {
-      const shortenedId = res.shortUrl.split("/").pop();
-      setId(shortenedId);
-      console.log("Extracted ID:", shortenedId);
-      setShowResult(true);
+      if (res?.shortUrl) {
+        const shortenedId = res.shortUrl.split("/").pop();
+        setId(shortenedId);
+        console.log("Extracted ID:", shortenedId);
+        setShowResult(true);
+      }
+    } catch (err) {
+      console.error(err.message);
+      toast.error("Failed to shorten URLs");
     }
-  } catch (err) {
-    console.error(err.message);
-    toast.error("Failed to shorten URLs");
-  }
-};
-
+  };
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(shortUrl);
@@ -104,14 +101,24 @@ const handleSubmitLinks = async () => {
               </a>
             ))}
           </div>
-          <div className="hidden lg:flex lg:flex-1 lg:justify-end gap-x-4">
-            <button
-              onClick={() => navigate("/")}
-              className="rounded-md px-4 py-2 text-sm font-semibold text-white hover:text-indigo-400 transition"
-            >
-              Log Out
-            </button>
-          </div>
+
+          
+          {authUser && (
+            <div className="hidden lg:flex lg:flex-1 lg:justify-end gap-x-4">
+              <button
+                onClick={() => navigate("/analytics")}
+                className="cursor-pointer rounded-md px-4 py-2 text-sm font-semibold text-white hover:text-indigo-400 transition"
+              >
+                Analytics
+              </button>
+              <button
+                onClick={() => navigate("/")}
+                className="cursor-pointer rounded-md px-4 py-2 text-sm font-semibold text-white hover:text-indigo-400 transition"
+              >
+                Log Out
+              </button>
+            </div>
+          )}
         </nav>
         <Dialog
           open={mobileMenuOpen}

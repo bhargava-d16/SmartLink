@@ -14,7 +14,7 @@ export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <div className="">
+    <div className="overflow-hidden">
       <header className="absolute inset-x-0 top-0 z-50">
         <nav
           aria-label="Global"
@@ -58,13 +58,13 @@ export default function Home() {
           <div className="hidden lg:flex lg:flex-1 lg:justify-end gap-x-4">
             <button
                onClick={() => navigate('/login')}
-              className="rounded-md px-4 py-2 text-sm font-semibold text-white hover:text-indigo-400 transition"
+              className="cursor-pointer rounded-md px-4 py-2 text-sm font-semibold text-white hover:text-indigo-400 transition"
             >
               Log in
             </button>
             <button
               onClick={() => navigate('/signup')}
-              className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition"
+              className="cursor-pointer rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition"
             >
               Sign up
             </button>
@@ -165,9 +165,11 @@ export default function Home() {
               >
                 Get started
               </button>
-              <a href="#" className="text-sm/6 font-semibold text-white">
-                Learn more <span aria-hidden="true">→</span>
-              </a>
+              <button onClick={() => navigate('/input')} 
+                      className="cursor-pointer text-sm/6 font-semibold text-white">
+                     Continue as Guest <span aria-hidden="true">→</span>
+              </button>
+              
             </div>
           </div>
         </div>
