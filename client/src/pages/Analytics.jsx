@@ -1,10 +1,18 @@
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
-import { useState } from "react";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Dialog, DialogPanel } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import logo from "../assets/link.png";
-import {useAuth} from "../store/authStore";
+import { useAuth } from "../store/authStore";
+import { useAnalytics } from "../store/analyticsStore";
 
 const navigation = [
   { name: "Contact Us", path: "#" },
@@ -19,9 +27,34 @@ const data = [
 ];
 
 export default function AnalyticsPage() {
-  const { authUser } = useAuth();
+  const { checkAuth, authUser, logout } = useAuth();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { getAnalytics, analytics } = useAnalytics();
+
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  const handlelogout = async () => {
+    try {
+      await logout();
+      navigate("/");
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await getAnalytics();
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchData();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-indigo-950 text-white">
@@ -35,7 +68,9 @@ export default function AnalyticsPage() {
           <div className="flex items-center lg:flex-1 gap-x-2">
             <a href="#" className="flex items-center -m-1.5 p-1.5">
               <img alt="logo" src={logo} className="h-8 w-auto" />
-              <span className="ml-2 text-xl font-bold tracking-wide">SmartLink</span>
+              <span className="ml-2 text-xl font-bold tracking-wide">
+                SmartLink
+              </span>
             </a>
           </div>
 
@@ -66,9 +101,8 @@ export default function AnalyticsPage() {
           {/* Auth buttons */}
           {authUser && (
             <div className="hidden lg:flex lg:flex-1 lg:justify-end gap-x-4">
-              
               <button
-                onClick={() => navigate("/")}
+                onClick={handlelogout}
                 className="cursor-pointer rounded-md px-4 py-2 text-sm font-semibold text-white hover:text-indigo-400 transition"
               >
                 Log Out
@@ -78,7 +112,11 @@ export default function AnalyticsPage() {
         </nav>
 
         {/* Mobile drawer */}
-        <Dialog open={mobileMenuOpen} onClose={setMobileMenuOpen} className="lg:hidden">
+        <Dialog
+          open={mobileMenuOpen}
+          onClose={setMobileMenuOpen}
+          className="lg:hidden"
+        >
           <div className="fixed inset-0 z-50 bg-black/50" />
           <DialogPanel className="fixed inset-y-0 right-0 z-50 w-full sm:max-w-sm bg-gray-900 p-6 shadow-xl">
             <div className="flex items-center justify-between">
@@ -117,11 +155,10 @@ export default function AnalyticsPage() {
       {/* Main content */}
       <main className="pt-32 px-6 lg:px-12 space-y-8">
         {/* Overview cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
             { title: "Total Links", value: "124" },
             { title: "Total Clicks", value: "5,421" },
-            { title: "Unique Visitors", value: "892" },
             { title: "Last Seen", value: "Sep 11, 18:20" },
           ].map((item, idx) => (
             <div
@@ -138,11 +175,21 @@ export default function AnalyticsPage() {
         <div className="bg-gray-800/40 backdrop-blur-md p-6 rounded-2xl shadow-lg">
           <h3 className="text-lg font-semibold mb-4">Clicks Over Time</h3>
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={data}>
+            <LineChart data={analytics.clicksOverTime}>
               <XAxis dataKey="date" stroke="#ccc" />
               <YAxis stroke="#ccc" />
-              <Tooltip contentStyle={{ backgroundColor: "#1f2937", borderRadius: "8px" }} />
-              <Line type="monotone" dataKey="clicks" stroke="#f97316" strokeWidth={2} />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "#1f2937",
+                  borderRadius: "8px",
+                }}
+              />
+              <Line
+                type="monotone"
+                dataKey="clicks"
+                stroke="#f97316"
+                strokeWidth={2}
+              />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -163,8 +210,12 @@ export default function AnalyticsPage() {
               </thead>
               <tbody>
                 <tr className="border-b border-gray-700 hover:bg-gray-800/50 transition">
-                  <td className="py-3 px-4 font-mono text-indigo-400">/x1y2z3</td>
-                  <td className="py-3 px-4 truncate max-w-xs">https://google.com</td>
+                  <td className="py-3 px-4 font-mono text-indigo-400">
+                    /x1y2z3
+                  </td>
+                  <td className="py-3 px-4 truncate max-w-xs">
+                    https://google.com
+                  </td>
                   <td className="py-3 px-4">120</td>
                   <td className="py-3 px-4">Sep 11, 18:20</td>
                   <td className="py-3 px-4">Sep 1</td>

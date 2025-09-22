@@ -6,6 +6,7 @@ import LoginPage from "./pages/LogIn";
 import { Toaster } from "react-hot-toast";
 import InputPage from "./pages/InputPage";
 import Analytics from "./pages/Analytics";
+import AllLinksPage from "./pages/Links";
 
 const App = () => {
   return (
@@ -20,6 +21,7 @@ const App = () => {
         <Route path="/login" element={<LoginPage />}></Route>
         <Route path="/input" element={<InputPage />}></Route>
         <Route path="/analytics" element={<Analytics/>}></Route>
+        <Route path="/links" element={<AllLinksPage/>}></Route>
       </Routes>
     </div>
   );

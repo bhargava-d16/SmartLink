@@ -16,6 +16,7 @@
     "@supabase/auth-ui-shared": "^0.1.8",
     "@supabase/supabase-js": "^2.56.1",
     "@tailwindcss/vite": "^4.1.12",
+    "@upstash/redis": "^1.35.4",
     "axios": "^1.11.0",
     "gsap": "^3.13.0",
     "lucide-react": "^0.542.0",

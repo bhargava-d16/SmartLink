@@ -1,18 +1,20 @@
-import mongoose, { Mongoose } from "mongoose";
+import mongoose from "mongoose";
 
 const URLSchema = new mongoose.Schema(
   {
-    full_url: [
-      {
-        type: [String],
-        required: true,
-        unique:true,
-      },
-    ],
+    full_url: {
+      type: [String],
+      required: true,
+    },
     short_url: {
       type: String,
       required: true,
       index: true,
+      unique: true,
+    },
+    shortened_url: {
+      type: String,
+      required: true,
       unique: true,
     },
     expiry: {

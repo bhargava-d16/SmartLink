@@ -1,11 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Dialog, DialogPanel } from "@headlessui/react";
 import toast from "react-hot-toast";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import logo from "../assets/link.png";
 import useLinkStore from "../store/LinkStore";
-import {useAuth} from "../store/authStore";
+import { useAuth } from "../store/authStore";
+
 const navigation = [
   { name: "Contact Us", path: "#" },
   { name: "Learn How it Works", path: "#" },
@@ -13,13 +14,17 @@ const navigation = [
 
 const InputPage = () => {
   const { shortenUrl, shortUrl, getUrl } = useLinkStore();
-  const { authUser } = useAuth();
+  const { checkAuth, authUser, logout, isCheckingAuth , isGuestMode } = useAuth();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [linkInput, setLinkInput] = useState("");
   const [links, setLinks] = useState([]);
   const [showResult, setShowResult] = useState(false);
   const [id, setId] = useState("");
+
+  useEffect(() => {
+    checkAuth();
+  }, []);
 
   const handleAddLink = (e) => {
     e.preventDefault();
@@ -46,6 +51,15 @@ const InputPage = () => {
     }
   };
 
+  const handlelogout = async () => {
+    try {
+      await logout();
+      navigate("/");
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   const copyToClipboard = () => {
     navigator.clipboard.writeText(shortUrl);
     toast.success("Copied to clipboard!");
@@ -64,6 +78,9 @@ const InputPage = () => {
   const handleDeleteLink = (linkId) => {
     setLinks((prev) => prev.filter((link) => link.id !== linkId));
   };
+
+ const isAuthenticated = !isCheckingAuth && !isGuestMode && authUser && authUser !== null;
+ 
 
   return (
     <div>
@@ -102,24 +119,43 @@ const InputPage = () => {
             ))}
           </div>
 
-          
-          {authUser && (
+          {/* Only show authenticated user buttons when actually logged in */}
+          {isAuthenticated && (
             <div className="hidden lg:flex lg:flex-1 lg:justify-end gap-x-4">
               <button
-                onClick={() => navigate("/analytics")}
+                onClick={() => navigate("/links")}
                 className="cursor-pointer rounded-md px-4 py-2 text-sm font-semibold text-white hover:text-indigo-400 transition"
               >
                 Analytics
               </button>
               <button
-                onClick={() => navigate("/")}
+                onClick={handlelogout}
                 className="cursor-pointer rounded-md px-4 py-2 text-sm font-semibold text-white hover:text-indigo-400 transition"
               >
                 Log Out
               </button>
             </div>
           )}
+
+          {/* Show login/signup buttons for guests */}
+          {!isAuthenticated && !isCheckingAuth && (
+            <div className="hidden lg:flex lg:flex-1 lg:justify-end gap-x-4">
+              <button
+                onClick={() => navigate("/login")}
+                className="cursor-pointer rounded-md px-4 py-2 text-sm font-semibold text-white hover:text-indigo-400 transition"
+              >
+                Log in
+              </button>
+              <button
+                onClick={() => navigate("/signup")}
+                className="cursor-pointer rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition"
+              >
+                Sign up
+              </button>
+            </div>
+          )}
         </nav>
+        
         <Dialog
           open={mobileMenuOpen}
           onClose={setMobileMenuOpen}
@@ -159,18 +195,37 @@ const InputPage = () => {
                   ))}
                 </div>
                 <div className="py-6 flex flex-col gap-3">
-                  <a
-                    href="#"
-                    className="block rounded-lg px-3 py-2.5 text-base font-semibold text-white hover:bg-white/5"
-                  >
-                    Log in
-                  </a>
-                  <a
-                    href="#"
-                    className="block rounded-lg bg-indigo-600 px-3 py-2.5 text-base font-semibold text-white text-center shadow-sm hover:bg-indigo-500 transition"
-                  >
-                    Sign up
-                  </a>
+                  {isAuthenticated ? (
+                    <>
+                      <button
+                        onClick={() => navigate("/links")}
+                        className="block rounded-lg px-3 py-2.5 text-base font-semibold text-white hover:bg-white/5"
+                      >
+                        Analytics
+                      </button>
+                      <button
+                        onClick={handlelogout}
+                        className="block rounded-lg px-3 py-2.5 text-base font-semibold text-white hover:bg-white/5"
+                      >
+                        Log Out
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => navigate("/login")}
+                        className="block rounded-lg px-3 py-2.5 text-base font-semibold text-white hover:bg-white/5"
+                      >
+                        Log in
+                      </button>
+                      <button
+                        onClick={() => navigate("/signup")}
+                        className="block rounded-lg bg-indigo-600 px-3 py-2.5 text-base font-semibold text-white text-center shadow-sm hover:bg-indigo-500 transition"
+                      >
+                        Sign up
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             </div>

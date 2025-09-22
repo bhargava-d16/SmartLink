@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Dialog, DialogPanel } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import logo from "../assets/link.png";
-
+import { useAuth } from "../store/authStore";
 const navigation = [
   { name: "Contact Us", path: "#" },
   { name: "Learn How it Works", path: "#" },
@@ -12,6 +12,12 @@ const navigation = [
 export default function Home() {
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const {setGuestMode }=useAuth();
+
+  const handleisguest=async()=>{
+      setGuestMode(true);
+      navigate("/input")
+  }
 
   return (
     <div className="overflow-hidden">
@@ -165,7 +171,7 @@ export default function Home() {
               >
                 Get started
               </button>
-              <button onClick={() => navigate('/input')} 
+              <button onClick={handleisguest} 
                       className="cursor-pointer text-sm/6 font-semibold text-white">
                      Continue as Guest <span aria-hidden="true">→</span>
               </button>

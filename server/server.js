@@ -1,17 +1,14 @@
 import dotenv from "dotenv";
-dotenv.config();
-
-
-console.log(process.env.MONGO_URI)
-
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-
 import connectDB from "./libs/db.js";
 import Urlrouter from "./routes/urlRoutes.js";
 import router from "./routes/authRoutes.js";
+import analyticsrouter from "./routes/analyticsRoutes.js";
 
+
+dotenv.config();
 const PORT = process.env.PORT || 8080;
 const app = express();
 
@@ -24,6 +21,7 @@ app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 
 app.use("/", router);
 app.use("/", Urlrouter);
+app.use("/", analyticsrouter);
 
 
 const startServer = async () => {
