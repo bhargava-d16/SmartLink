@@ -13,12 +13,11 @@ dotenv.config();
 const PORT = process.env.PORT || 8080;
 const app = express();
 
-
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ limit: "5mb", extended: true }));
 app.use(cookieParser());
 
-app.use(cors({ origin: "http://localhost:5173", credentials: true }));
+app.use(cors({ origin:process.env.APP_URL, credentials: true }));
 
 app.use("/", router);
 app.use("/", Urlrouter);
