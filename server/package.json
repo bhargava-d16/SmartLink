@@ -1,5 +1,8 @@
 {
   "type": "module",
+  "scripts": {
+   "start": "node server.js"
+  },  
   "dependencies": {
     "@upstash/redis": "^1.35.4",
     "bcrypt": "^6.0.0",
