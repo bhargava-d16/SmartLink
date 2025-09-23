@@ -61,3 +61,8 @@ const startServer = async () => {
 };
 
 startServer();
+
+process.on('SIGTERM', () => {
+  console.log('Received SIGTERM, shutting down gracefully');
+  process.exit(0);
+});
