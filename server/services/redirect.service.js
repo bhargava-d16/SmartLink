@@ -51,8 +51,6 @@ export const redirectService = async (id) => {
         await redis.del(key);
       }
     }
-
-    console.log("🔍 Fetching from database...");
     const url = await UrlModel.findOneAndUpdate(
       { short_url: id },
       { $inc: { clicks: 1 } },
