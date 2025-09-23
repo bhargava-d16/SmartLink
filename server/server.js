@@ -12,41 +12,35 @@ dotenv.config();
 const PORT = process.env.PORT || 8080;
 const app = express();
 
-// Middleware FIRST
+// Middleware
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ limit: "5mb", extended: true }));
 app.use(cookieParser());
-app.use(cors({ origin: true, credentials: true })); // Allow all origins temporarily
+app.use(cors({ origin: true, credentials: true }));
 
-// Health check BEFORE other routes
+// Health check
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'OK', timestamp: Date.now() });
 });
 
-app.get('/favicon.ico', (req, res) => {
-  res.status(204).end();
-});
+// Favicon
+app.get('/favicon.ico', (req, res) => res.status(204).end());
 
-// API routes with specific prefixes
-app.use("/auth", router);           // Changed from "/"
-app.use("/url", Urlrouter);         // Changed from "/"
-app.use("/analytics", analyticsrouter); // Changed from "/"
+// API routes
+app.use("/auth", router);
+app.use("/url", Urlrouter);
+app.use("/analytics", analyticsrouter);
 
-// Catch-all redirect route LAST
+// Catch-all redirect
 app.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    
-    // Skip if it looks like a static file
-    if (id.includes('.')) {
-      return res.status(404).end();
-    }
-    
+    if (id.includes('.')) return res.status(404).end();
+
     console.log(`Direct browser access to: ${id}`);
-    
     const urlObj = await redirectService(id);
-    
-    if (urlObj && urlObj.fullUrl) {
+
+    if (urlObj?.fullUrl) {
       console.log(`Redirecting to: ${urlObj.fullUrl}`);
       return res.redirect(urlObj.fullUrl);
     } else {
@@ -60,12 +54,18 @@ app.get('/:id', async (req, res) => {
 
 const startServer = async () => {
   try {
+    console.log("Starting server...");
+    
+    // Log environment variables for debugging
+    console.log("PORT:", PORT);
+    console.log("MONGO_URI:", process.env.MONGO_URI ? "SET" : "NOT SET");
+
     console.log("Connecting to MongoDB...");
     await connectDB();
-    console.log("MongoDB Connection Ready");
+    console.log("MongoDB Connected ✅");
 
     app.listen(PORT, '0.0.0.0', () => {
-      console.log(`Server running on port ${PORT}`);
+      console.log(`Server running on port ${PORT} ✅`);
     });
   } catch (error) {
     console.error("Error starting server:", error);
@@ -73,9 +73,20 @@ const startServer = async () => {
   }
 };
 
-startServer();
-
+// Handle external shutdown signals
 process.on('SIGTERM', () => {
-  console.log('Received SIGTERM, shutting down gracefully');
+  console.log('Received SIGTERM, shutting down gracefully...');
   process.exit(0);
 });
+
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  process.exit(1);
+});
+
+startServer();
