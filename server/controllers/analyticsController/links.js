@@ -11,10 +11,7 @@ const sendlinks = async (req, res) => {
     const links = await UrlModel.find({ user: userId })
       .sort({ createdAt: -1 })
       .select('full_url short_url shortened_url clicks createdAt');
-
-    console.log("Found user links:", links);
-
-    res.status(200).json(links);
+   res.status(200).json(links);
     
   } catch (err) {
     console.error("Error in sendlinks:", err);

@@ -36,8 +36,9 @@ export default function AllLinksPage() {
     checkAuth(); 
   }, []);
 
-  const handleLinkClick = (linkId) => {
-    navigate(`/analytics/${linkId}`);
+  const handleLinkClick =async(linkId) => {
+    console.log(linkId)
+     navigate(`/analytics/${linkId}`);
   };
 
   const handlelogout = async () => {
@@ -175,8 +176,8 @@ export default function AllLinksPage() {
           <div className="space-y-4">
             {links.map((link) => (
               <div
-                key={link._id}
-                onClick={() => handleLinkClick(link._id)}
+                key={link.short_url}
+                onClick={() => handleLinkClick(link.short_url)}
                 className="bg-gray-800/40 backdrop-blur-md rounded-2xl shadow-lg p-6 hover:bg-gray-800/60 transition group cursor-pointer"
               >
                 <div className="flex items-center justify-between">

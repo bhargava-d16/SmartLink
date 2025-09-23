@@ -1,41 +1,45 @@
 import redis from "../../libs/redis.js";
 
 const analytics = async (req, res) => {
-  try {
-    const totalClicks = (await redis.get("analytics:totalClicks")) || 0;
-    const lastSeen = (await redis.get("analytics:lastSeen")) || null;
+  const { linkId } = req.params; 
 
-    const clicksOverTimeRaw = await redis.get("analytics:clicksOverTime");
-    console.log("Raw clicksOverTime data:", clicksOverTimeRaw);
-    console.log("Type of clicksOverTimeRaw:", typeof clicksOverTimeRaw);
-    
+  const userId = req.user?._id?.toString();
+  console.log(linkId)
+  const actualLinkId = linkId || req.params.id || req.params.shortId || req.params.urlId;
+  
+  if (!actualLinkId) {
+    return res.status(400).json({ message: "Link ID parameter is missing" });
+  }
+  
+  const analyticsKey = `analytics:${userId}:${actualLinkId}`;
+
+  try {
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const totalClicks =
+      (await redis.get(`${analyticsKey}:totalClicks`)) || 0;
+    const lastSeen = (await redis.get(`${analyticsKey}:lastSeen`)) || null;
+
+    const clicksOverTimeRaw = await redis.get(
+      `${analyticsKey}:clicksOverTime`
+    );
     let clicksOverTime = [];
-    
+
     if (clicksOverTimeRaw) {
-      
-      if (typeof clicksOverTimeRaw === 'object' && clicksOverTimeRaw !== null) {
-        clicksOverTime = Array.isArray(clicksOverTimeRaw) ? clicksOverTimeRaw : [];
-      } 
-      
-      else if (typeof clicksOverTimeRaw === 'string' && clicksOverTimeRaw !== '[object Object]') {
+      if (typeof clicksOverTimeRaw === "string") {
         try {
           clicksOverTime = JSON.parse(clicksOverTimeRaw);
-          
-          if (!Array.isArray(clicksOverTime)) {
-            clicksOverTime = [];
-          }
-        } catch (parseError) {
-          console.error("JSON parse error in analytics:", parseError);
-          console.error("Invalid clicksOverTime data:", clicksOverTimeRaw);
-       
-          await redis.del("analytics:clicksOverTime");
+          if (!Array.isArray(clicksOverTime)) clicksOverTime = [];
+        } catch (err) {
+          console.error("Failed to parse clicksOverTime:", err);
           clicksOverTime = [];
+          await redis.del(`${analyticsKey}:clicksOverTime`);
         }
       } else {
-        console.error("Invalid clicksOverTime data format:", clicksOverTimeRaw);
-        
-        await redis.del("analytics:clicksOverTime");
         clicksOverTime = [];
+        await redis.del(`${analyticsKey}:clicksOverTime`);
       }
     }
 

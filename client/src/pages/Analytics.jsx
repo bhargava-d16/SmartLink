@@ -7,7 +7,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Dialog, DialogPanel } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import logo from "../assets/link.png";
@@ -19,42 +19,76 @@ const navigation = [
   { name: "Learn How it Works", path: "#" },
 ];
 
-const data = [
-  { date: "Sep 1", clicks: 30 },
-  { date: "Sep 2", clicks: 45 },
-  { date: "Sep 3", clicks: 20 },
-  { date: "Sep 4", clicks: 60 },
-];
-
 export default function AnalyticsPage() {
   const { checkAuth, authUser, logout } = useAuth();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { getAnalytics, analytics } = useAnalytics();
+  const [loading, setLoading] = useState(false); 
+  const { getAnalytics, analytics, getAllLinks, links } = useAnalytics();
 
+  const {linkId}=useParams()
+  console.log(linkId)
   useEffect(() => {
     checkAuth();
   }, []);
 
-  const handlelogout = async () => {
+
+  useEffect(() => {
+    if (authUser === false) {
+      navigate("/login");
+    }
+  }, [authUser, navigate]);
+
+  useEffect(() => {
+    if (authUser) {
+      const fetchData = async () => {
+        try {
+          setLoading(true);
+          await getAnalytics(linkId);
+          await getAllLinks(); 
+        } catch (error) {
+          console.log("Error fetching data:", error);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchData();
+    }
+  }, [authUser]);
+
+  const handleLogout = async () => {
     try {
       await logout();
       navigate("/");
     } catch (error) {
-      console.log(error);
+      console.log("Logout error:", error);
     }
   };
+  
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await getAnalytics();
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    fetchData();
-  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-indigo-950 text-white flex items-center justify-center">
+        <div className="text-xl">Loading...</div>
+      </div>
+    );
+  }
+
+
+  if (authUser === null) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-indigo-950 text-white flex items-center justify-center">
+        <div className="text-xl">Checking authentication...</div>
+      </div>
+    );
+  }
+
+
+  const totalLinks = links?.length || 0;
+  const totalClicks = analytics?.totalClicks || 0;
+  const lastSeen = analytics?.lastSeen || "Never";
+  const clicksOverTime = analytics?.clicksOverTime || [];
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-indigo-950 text-white">
@@ -99,16 +133,14 @@ export default function AnalyticsPage() {
           </div>
 
           {/* Auth buttons */}
-          {authUser && (
-            <div className="hidden lg:flex lg:flex-1 lg:justify-end gap-x-4">
-              <button
-                onClick={handlelogout}
-                className="cursor-pointer rounded-md px-4 py-2 text-sm font-semibold text-white hover:text-indigo-400 transition"
-              >
-                Log Out
-              </button>
-            </div>
-          )}
+          <div className="hidden lg:flex lg:flex-1 lg:justify-end gap-x-4">
+            <button
+              onClick={handleLogout}
+              className="cursor-pointer rounded-md px-4 py-2 text-sm font-semibold text-white hover:text-indigo-400 transition"
+            >
+              Log Out
+            </button>
+          </div>
         </nav>
 
         {/* Mobile drawer */}
@@ -139,12 +171,13 @@ export default function AnalyticsPage() {
                   {item.name}
                 </a>
               ))}
+              {/* Fixed: Show logout for authenticated users in mobile menu */}
               <div className="flex flex-col gap-3 pt-4 border-t border-gray-700">
-                <button className="text-left text-white hover:text-indigo-400 transition">
-                  Log in
-                </button>
-                <button className="rounded-lg bg-indigo-600 px-3 py-2.5 text-base font-semibold text-white text-center shadow-sm hover:bg-indigo-500 transition">
-                  Sign up
+                <button
+                  onClick={handleLogout}
+                  className="text-left text-white hover:text-indigo-400 transition"
+                >
+                  Log Out
                 </button>
               </div>
             </div>
@@ -157,9 +190,17 @@ export default function AnalyticsPage() {
         {/* Overview cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
-            { title: "Total Links", value: "124" },
-            { title: "Total Clicks", value: "5,421" },
-            { title: "Last Seen", value: "Sep 11, 18:20" },
+            { title: "Total Links", value: totalLinks.toString() },
+            { title: "Total Clicks", value: totalClicks.toLocaleString() },
+            {
+              title: "Last Seen",
+              value: lastSeen
+                ? new Date(lastSeen).toLocaleString("en-IN", {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  })
+                : "No data",
+            },
           ].map((item, idx) => (
             <div
               key={idx}
@@ -174,55 +215,30 @@ export default function AnalyticsPage() {
         {/* Chart */}
         <div className="bg-gray-800/40 backdrop-blur-md p-6 rounded-2xl shadow-lg">
           <h3 className="text-lg font-semibold mb-4">Clicks Over Time</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={analytics.clicksOverTime}>
-              <XAxis dataKey="date" stroke="#ccc" />
-              <YAxis stroke="#ccc" />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "#1f2937",
-                  borderRadius: "8px",
-                }}
-              />
-              <Line
-                type="monotone"
-                dataKey="clicks"
-                stroke="#f97316"
-                strokeWidth={2}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Table */}
-        <div className="bg-gray-800/40 backdrop-blur-md p-6 rounded-2xl shadow-lg">
-          <h3 className="text-lg font-semibold mb-4">Recent Links</h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="text-gray-400 border-b border-gray-700">
-                  <th className="py-3 px-4">Short URL</th>
-                  <th className="py-3 px-4">Original URL</th>
-                  <th className="py-3 px-4">Clicks</th>
-                  <th className="py-3 px-4">Last Seen</th>
-                  <th className="py-3 px-4">Created At</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="border-b border-gray-700 hover:bg-gray-800/50 transition">
-                  <td className="py-3 px-4 font-mono text-indigo-400">
-                    /x1y2z3
-                  </td>
-                  <td className="py-3 px-4 truncate max-w-xs">
-                    https://google.com
-                  </td>
-                  <td className="py-3 px-4">120</td>
-                  <td className="py-3 px-4">Sep 11, 18:20</td>
-                  <td className="py-3 px-4">Sep 1</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          {clicksOverTime.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={clicksOverTime}>
+                <XAxis dataKey="date" stroke="#ccc" />
+                <YAxis stroke="#ccc" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#1f2937",
+                    borderRadius: "8px",
+                  }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="clicks"
+                  stroke="#f97316"
+                  strokeWidth={2}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-[300px] flex items-center justify-center text-gray-400">
+              <p>No click data available yet</p>
+            </div>
+          )}
         </div>
       </main>
     </div>

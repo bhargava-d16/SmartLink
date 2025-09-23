@@ -2,58 +2,93 @@ import UrlModel from "../models/shortUrl.js";
 import redis from "../libs/redis.js";
 
 export const redirectService = async (id) => {
+ 
   try {
     const key = `short:${id}`;
+    console.log(id);
     const cached = await redis.get(key);
 
     if (cached) {
-      console.log("Cached data:", cached);
-      console.log("Type of cached:", typeof cached);
-      if (typeof cached === 'object' && cached !== null) {
-        return cached;
-      }
-      if (typeof cached === 'string' && cached !== '[object Object]') {
-        try {
-          return JSON.parse(cached);
-        } catch (parseError) {
-          console.error("JSON parse error:", parseError);
-          console.error("Cached data that failed to parse:", cached);
-          await redis.del(key);
+      try {
+        const parsedCache = JSON.parse(cached);
+        
+        const userId = parsedCache.userId;
+        if (userId) {
+          const analyticsKey = `analytics:${userId}:${id}`;
+
+          await redis.incr(`${analyticsKey}:totalClicks`);
+          await redis.set(
+            `${analyticsKey}:lastSeen`,
+            new Date().toISOString()
+          );
+
+          const today = new Date().toISOString().slice(0, 10);
+          let clicksOverTime = await redis.get(`${analyticsKey}:clicksOverTime`);
+
+          try {
+            clicksOverTime = clicksOverTime ? JSON.parse(clicksOverTime) : [];
+          } catch {
+            clicksOverTime = [];
+          }
+
+          const todayData = clicksOverTime.find((d) => d.date === today);
+          if (todayData) {
+            todayData.clicks += 1;
+          } else {
+            clicksOverTime.push({ date: today, clicks: 1 });
+          }
+
+          await redis.set(
+            `${analyticsKey}:clicksOverTime`,
+            JSON.stringify(clicksOverTime)
+          );
+
+        } else {
         }
-      } else {
-        console.error("Invalid cached data:", cached);
+        return parsedCache;
+      } catch (error) {
+
         await redis.del(key);
       }
     }
 
+    console.log("🔍 Fetching from database...");
     const url = await UrlModel.findOneAndUpdate(
       { short_url: id },
       { $inc: { clicks: 1 } },
       { new: true }
     );
 
-    if (!url) return null;
+    if (!url) {
+      return null;
+    }
 
+    const userId = url.user.toString();
+    
     const urlObj = {
       fullUrl: url.full_url,
       clicks: url.clicks,
       shortUrl: url.short_url,
+      shortened_url: url.shortened_url,
+      userId: userId,
     };
-
-    console.log("URL object to cache:", urlObj);
 
     await redis.set(key, JSON.stringify(urlObj), { ex: 60 * 60 * 24 * 7 });
 
-    await redis.incr("analytics:totalClicks");
-    await redis.set("analytics:lastSeen", new Date().toISOString());
+    const analyticsKey = `analytics:${userId}:${id}`;
+    
+    await redis.incr(`${analyticsKey}:totalClicks`);
+    await redis.set(
+      `${analyticsKey}:lastSeen`,
+      new Date().toISOString()
+    );
 
     const today = new Date().toISOString().slice(0, 10);
-    let clicksOverTime = await redis.get("analytics:clicksOverTime");
-    
+    let clicksOverTime = await redis.get(`${analyticsKey}:clicksOverTime`);
+
     try {
       clicksOverTime = clicksOverTime ? JSON.parse(clicksOverTime) : [];
-    } catch (parseError) {
-      console.error("Error parsing clicksOverTime:", parseError);
+    } catch {
       clicksOverTime = [];
     }
 
@@ -64,10 +99,15 @@ export const redirectService = async (id) => {
       clicksOverTime.push({ date: today, clicks: 1 });
     }
 
-    await redis.set("analytics:clicksOverTime", JSON.stringify(clicksOverTime));
+    await redis.set(
+      `${analyticsKey}:clicksOverTime`,
+      JSON.stringify(clicksOverTime)
+    );
+
+    const totalClicksCheck = await redis.get(`${analyticsKey}:totalClicks`);
+
     return urlObj;
   } catch (err) {
-    console.error("Error in redirectService:", err);
     return null;
   }
 };
