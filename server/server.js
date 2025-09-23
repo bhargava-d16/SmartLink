@@ -8,27 +8,40 @@ import router from "./routes/authRoutes.js";
 import analyticsrouter from "./routes/analyticsRoutes.js";
 import { redirectService } from "./services/redirect.service.js";
 
-
 dotenv.config();
 const PORT = process.env.PORT || 8080;
 const app = express();
 
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'OK' });
-});
+// Middleware FIRST
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ limit: "5mb", extended: true }));
 app.use(cookieParser());
+app.use(cors({ origin: true, credentials: true })); // Allow all origins temporarily
 
-app.use(cors({ origin:process.env.APP_URL, credentials: true }));
+// Health check BEFORE other routes
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'OK', timestamp: Date.now() });
+});
 
-app.use("/", router);
-app.use("/", Urlrouter);
-app.use("/", analyticsrouter);
+app.get('/favicon.ico', (req, res) => {
+  res.status(204).end();
+});
 
+// API routes with specific prefixes
+app.use("/auth", router);           // Changed from "/"
+app.use("/url", Urlrouter);         // Changed from "/"
+app.use("/analytics", analyticsrouter); // Changed from "/"
+
+// Catch-all redirect route LAST
 app.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    
+    // Skip if it looks like a static file
+    if (id.includes('.')) {
+      return res.status(404).end();
+    }
+    
     console.log(`Direct browser access to: ${id}`);
     
     const urlObj = await redirectService(id);
@@ -51,11 +64,11 @@ const startServer = async () => {
     await connectDB();
     console.log("MongoDB Connection Ready");
 
-    app.listen(PORT, '0.0.0.0',() => {
-      console.log(` Server running on port ${PORT}`);
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`Server running on port ${PORT}`);
     });
   } catch (error) {
-    console.error(" Error starting server:", error);
+    console.error("Error starting server:", error);
     process.exit(1);
   }
 };
