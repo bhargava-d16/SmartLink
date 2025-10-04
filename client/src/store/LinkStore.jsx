@@ -29,10 +29,7 @@ const useLinkStore = create((set) => ({
       const urls = res.data.fullUrl.flat();
     
       urls.forEach((url, index) => {
-      
-        setTimeout(() => {
-          window.open(url, "_blank");
-        }, index * 100); 
+         window.open(url, "_blank");
       });
     } catch (error) {
       console.log(error);
