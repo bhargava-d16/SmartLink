@@ -1,6 +1,6 @@
 import axios from "axios";
 
 export const axiosInstance = axios.create({
-  baseURL:import.meta.env.VITE_APP_URL,
+  baseURL:"smartlink-production-6246.up.railway.app",
   withCredentials: true,
 });

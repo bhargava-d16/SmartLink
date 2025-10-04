@@ -12,26 +12,22 @@ dotenv.config();
 const PORT = process.env.PORT || 8080;
 const app = express();
 
-// Middleware
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ limit: "5mb", extended: true }));
 app.use(cookieParser());
-app.use(cors({ origin: true, credentials: true }));
+app.use(
+  cors({
+    origin: "https://smartlink-production-6246.up.railway.app",
+    credentials: true,
+  })
+);
 
-// Health check
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'OK', timestamp: Date.now() });
-});
 
-// Favicon
-app.get('/favicon.ico', (req, res) => res.status(204).end());
 
-// API routes
-app.use("/auth", router);
-app.use("/url", Urlrouter);
-app.use("/analytics", analyticsrouter);
+app.use("/", router);
+app.use("/", Urlrouter);
+app.use("/", analyticsrouter);
 
-// Catch-all redirect
 app.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -54,39 +50,16 @@ app.get('/:id', async (req, res) => {
 
 const startServer = async () => {
   try {
-    console.log("Starting server...");
-    
-    // Log environment variables for debugging
-    console.log("PORT:", PORT);
-    console.log("MONGO_URI:", process.env.MONGO_URI ? "SET" : "NOT SET");
-
-    console.log("Connecting to MongoDB...");
     await connectDB();
-    console.log("MongoDB Connected ✅");
+    console.log("MongoDB Connected");
 
     app.listen(PORT, '0.0.0.0', () => {
-      console.log(`Server running on port ${PORT} ✅`);
+      console.log(`Server running on port ${PORT}`);
     });
   } catch (error) {
     console.error("Error starting server:", error);
     process.exit(1);
   }
 };
-
-// Handle external shutdown signals
-process.on('SIGTERM', () => {
-  console.log('Received SIGTERM, shutting down gracefully...');
-  process.exit(0);
-});
-
-process.on('uncaughtException', (err) => {
-  console.error('Uncaught Exception:', err);
-  process.exit(1);
-});
-
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-  process.exit(1);
-});
 
 startServer();
