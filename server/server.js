@@ -17,7 +17,7 @@ app.use(express.urlencoded({ limit: "5mb", extended: true }));
 app.use(cookieParser());
 app.use(
   cors({
-    origin: "https://smartlink-production-6246.up.railway.app",
+    origin: "https://smart-link-omega.vercel.app",
     credentials: true,
   })
 );
