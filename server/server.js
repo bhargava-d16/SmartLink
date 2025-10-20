@@ -28,7 +28,7 @@ app.use("/", router);
 app.use("/", Urlrouter);
 app.use("/", analyticsrouter);
 
-app.get('/get/:id', async (req, res) => {
+app.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     if (id.includes('.')) return res.status(404).end();

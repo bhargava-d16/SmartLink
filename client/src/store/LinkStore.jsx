@@ -24,7 +24,7 @@ const useLinkStore = create((set) => ({
 
   getUrl: async (id) => {
     try {
-      const res = await axiosInstance.get(`/get/${id}`);
+      const res = await axiosInstance.get(`/${id}`);
       console.log(res.data.fullUrl);
       const urls = res.data.fullUrl.flat();
     
