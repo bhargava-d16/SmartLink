@@ -92,9 +92,13 @@ const InputPage = () => {
           <div className="flex items-center lg:flex-1 gap-x-2">
             <a href="#" className="flex items-center -m-1.5 p-1.5">
               <img alt="logo" src={logo} className="h-8 w-auto" />
-              <span className="ml-2 text-xl font-bold text-white">
+              <button 
+                className="ml-2 text-xl font-bold text-white"
+                onClick={()=>{
+                   navigate("/")
+                }}>
                 SmartLink
-              </span>
+              </button>
             </a>
           </div>
           <div className="flex lg:hidden">

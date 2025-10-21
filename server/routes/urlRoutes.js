@@ -7,5 +7,5 @@ const Urlrouter=express.Router();
 
 Urlrouter.post("/create",protectRoute,urlcreate)
 
-Urlrouter.get("/:id",getUrl)
+Urlrouter.get("/get/:id",getUrl)
 export default Urlrouter 

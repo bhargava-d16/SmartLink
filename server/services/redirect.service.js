@@ -56,13 +56,12 @@ export const redirectService = async (id) => {
       { $inc: { clicks: 1 } },
       { new: true }
     );
-
     if (!url) {
       return null;
     }
-
-    const userId = url.user.toString();
-    
+    console.log(url)
+    const userId = url.user ? url.user.toString() : null;
+    console.log("hi")
     const urlObj = {
       fullUrl: url.full_url,
       clicks: url.clicks,
@@ -70,11 +69,10 @@ export const redirectService = async (id) => {
       shortened_url: url.shortened_url,
       userId: userId,
     };
-
     await redis.set(key, JSON.stringify(urlObj), { ex: 60 * 60 * 24 * 7 });
 
     const analyticsKey = `analytics:${userId}:${id}`;
-    
+    console.log(analyticsKey)
     await redis.incr(`${analyticsKey}:totalClicks`);
     await redis.set(
       `${analyticsKey}:lastSeen`,
@@ -103,7 +101,7 @@ export const redirectService = async (id) => {
     );
 
     const totalClicksCheck = await redis.get(`${analyticsKey}:totalClicks`);
-
+    console.log(urlObj);
     return urlObj;
   } catch (err) {
     return null;

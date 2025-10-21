@@ -22,21 +22,22 @@ const useLinkStore = create((set) => ({
     }
   },
 
-  getUrl: async (id) => {
-    try {
-      const res = await axiosInstance.get(`/${id}`);
-      console.log(res.data.fullUrl);
-      const urls = res.data.fullUrl.flat();
-    
-      urls.forEach((url, index) => {
-         window.open(url, "_blank");
-      });
-    } catch (error) {
-      console.log(error);
-      toast.error(error.message);
-      return { success: false, message: error.response?.data?.message };
-    }
-  },
+ getUrl: async (id) => {
+  try {
+    const res = await axiosInstance.get(`/get/${id}`);
+    console.log(res.data.fullUrl);
+    const urls = Array.isArray(res.data.fullUrl) ? res.data.fullUrl : [res.data.fullUrl];
+
+    urls.forEach((url) => {
+      window.open(url, "_blank");
+    });
+  } catch (error) {
+    console.log(error);
+    toast.error(error.message);
+  }
+},
+
+
 }));
 
 export default useLinkStore;

@@ -17,34 +17,54 @@ app.use(express.urlencoded({ limit: "5mb", extended: true }));
 app.use(cookieParser());
 app.use(
   cors({
-    origin: "https://smart-link-omega.vercel.app",
+    // origin: "https://smart-link-omega.vercel.app",
+    origin:true,
     credentials: true,
   })
 );
 
 
 
-app.use("/", router);
-app.use("/", Urlrouter);
-app.use("/", analyticsrouter);
+app.use("/api", router);
+app.use("/api", Urlrouter);
+app.use("/api", analyticsrouter);
 
 app.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     if (id.includes('.')) return res.status(404).end();
 
-    console.log(`Direct browser access to: ${id}`);
     const urlObj = await redirectService(id);
 
-    if (urlObj?.fullUrl) {
-      console.log(`Redirecting to: ${urlObj.fullUrl}`);
-      return res.redirect(urlObj.fullUrl);
-    } else {
+    if (!urlObj || !urlObj.fullUrl) {
       return res.status(404).send('<h1>URL Not Found</h1><p>This short URL does not exist.</p>');
     }
+
+    const urls = Array.isArray(urlObj.fullUrl) ? urlObj.fullUrl : [urlObj.fullUrl];
+    const html = `
+      <!DOCTYPE html>
+      <html lang="en">
+        <head>
+          <meta charset="UTF-8" />
+          <title>Redirecting...</title>
+          <script>
+            const urls = ${JSON.stringify(urls)};
+            urls.forEach(url => window.open(url, "_blank"));
+            // Optional: redirect to first URL for fallback
+            window.location.href = urls[0];
+          </script>
+        </head>
+        <body>
+          <p>Redirecting you to multiple links...</p>
+        </body>
+      </html>
+    `;
+
+    res.send(html);
+
   } catch (error) {
     console.error('Redirect error:', error);
-    return res.status(500).send('<h1>Server Error</h1>');
+    res.status(500).send('<h1>Server Error</h1>');
   }
 });
 
