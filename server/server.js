@@ -17,8 +17,8 @@ app.use(express.urlencoded({ limit: "5mb", extended: true }));
 app.use(cookieParser());
 app.use(
   cors({
-    // origin: "https://smart-link-omega.vercel.app",
-    origin:true,
+    origin: "https://smart-link-omega.vercel.app",
+    // origin:true,
     credentials: true,
   })
 );
