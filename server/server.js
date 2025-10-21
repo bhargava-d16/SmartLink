@@ -25,9 +25,9 @@ app.use(
 
 
 
-app.use("/api", router);
-app.use("/api", Urlrouter);
-app.use("/api", analyticsrouter);
+app.use("/", router);
+app.use("/", Urlrouter);
+app.use("/", analyticsrouter);
 
 app.get('/:id', async (req, res) => {
   try {
